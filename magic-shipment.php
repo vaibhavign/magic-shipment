@@ -36,7 +36,10 @@ class WC_magicshipment{
     private $orderObject;
     public function __construct(){
      //   register_activation_hook( __FILE__, array( $this, 'createTables' ));
-        add_action('woocommerce_order_status_processing', array( &$this, 'change_order_status' )); 
+      //  add_action('woocommerce_order_status_processing', array( &$this, 'change_order_status' )); 
+         add_action('load-edit.php', array( &$this, 'change_order_status' )); 
+        
+        
       add_action('admin_menu', array( &$this, 'woocommerce_magicshipment_admin_menu' )); 
       add_action('wp_ajax_prioruty_action', array(&$this, 'prioruty_action_callback'));
       //  add_submenu_page( 'eshopbox-magicshipment', 'Config', 'Config', 'manage_options', 'config',array( &$this, 'config_options') ); 
@@ -152,7 +155,9 @@ if($getPriority==''){
     
 }
     
-    function change_order_status($order_id){
+    function change_order_status(){
+        //echo 'hello'; exit;
+        echo "<pre>";print_r($_REQUEST);echo "</pre>";exit;
       global $wpdb,$woocommerce;
       $theorder = new WC_Order($order_id); 
       $this->orderObject = $theorder;
