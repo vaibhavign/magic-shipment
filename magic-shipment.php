@@ -36,8 +36,8 @@ class WC_magicshipment{
     private $orderObject;
     public function __construct(){
      //   register_activation_hook( __FILE__, array( $this, 'createTables' ));
-      //  add_action('woocommerce_order_status_processing', array( &$this, 'change_order_status' )); 
-         add_action('load-edit.php', array( &$this, 'change_order_status' )); 
+        add_action('woocommerce_order_status_processing', array( &$this, 'change_order_status' )); 
+         add_action('load-edit.php', array( &$this, 'change_order_status_fromlisting' )); 
         
         
       add_action('admin_menu', array( &$this, 'woocommerce_magicshipment_admin_menu' )); 
@@ -155,9 +155,108 @@ if($getPriority==''){
     
 }
     
-    function change_order_status(){
-        //echo 'hello'; exit;
-        echo "<pre>";print_r($_REQUEST);echo "</pre>";exit;
+function change_order_status_fromlisting(){
+    global $wpdb,$woocommerce;
+  //  echo '<pre>';
+  //  print_r($_REQUEST);
+   
+    if($_REQUEST['post_type']=='shop_order'){
+        if($_REQUEST['action'] == 'mark_processing'){
+        //    echo '<pre>';
+   // print_r($_REQUEST);
+  // exit;
+         //   echo 'say hello';
+            if(sizeof($_REQUEST['post'])>0){
+                foreach($_REQUEST['post'] as $key=>$vala){
+                    $theorder = new WC_Order($vala); 
+      $this->orderObject = $theorder;
+    //  echo '<pre>';
+    //  print_r($theorder);
+    // exit;
+    $trackingNumber = $theorder->order_custom_fields['_tracking_number'][0];
+    $getPriority =  lcfirst(get_option( 'shipping_provider_priority'));
+    if($getPriority==''){   
+        update_option( 'shipping_provider_priority', $income_data );
+      $income_data =  lcfirst('Delhivery-Aramex-Bluedart');
+      $explodePriority = explode('-',$income_data); 
+    } else {
+        $explodePriority = explode('-',$getPriority); 
+    }
+    if(empty($trackingNumber)){
+        $insertT = false;
+        foreach($explodePriority as $keye=>$vale){
+            echo $vale.''.$theorder->shipping_postcode;
+            if($this->checkAvailability(lcfirst($vale),$theorder->shipping_postcode)){
+                $provide = lcfirst($vale);
+                 $insertT = true;
+                break;
+            }
+         //   $this->$val.'bluedartShipment';
+        }
+         
+        
+
+        if($insertT){
+            if($provide=='bluedart'){
+              $trackingNum =    $this->bluedartShipment($theorder);  
+                     update_post_meta($vala, '_tracking_number',$trackingNum);
+                     update_post_meta($vala,'_tracking_provider','bluedart');
+                }
+                
+                        if($provide=='aramex'){
+              $trackingNum =    $this->aramexShipments($theorder);  
+                     update_post_meta($vala, '_tracking_number',$trackingNum);
+                     update_post_meta($vala,'_tracking_provider','aramex');
+                } 
+                
+                                if($provide=='delhivery'){
+              $trackingNum =    $this->delhiveryshipment();  
+                     update_post_meta($vala, '_tracking_number',$trackingNum);
+                     update_post_meta($vala,'_tracking_provider','delhivery');
+                }    
+            
+            
+         //   $trackingNum =  $this->delhiveryshipment();
+        } else {
+            
+            echo 'No tracking available';
+        }
+  //exit;
+  //  $trackingNum =    $this->aramexShipments($theorder);
+  //  $trackingNum =    $this->bluedartShipment($theorder);
+ 
+     // $_POST['tracking_number'] = $trackingNum;
+     // $_POST['tracking_provider']='delhivery';
+        
+     //  update_post_meta($vala, '_tracking_number',$trackingNum);
+      // update_post_meta($vala,'_tracking_provider','delhivery');
+     
+       // $this->assignTrackingAndProvider('delhivery',$trackingNum);
+     //  echo 'a';
+//exit;        
+
+      
+      
+    } else {
+        // do nothing
+    }
+                    
+            }
+            }
+        }
+        
+    }
+    
+  //  exit;
+    
+      
+  //  return true;
+}
+
+
+    function change_order_status($order_id){
+       
+     //   echo "<pre>";print_r($_REQUEST);echo "</pre>";exit;
       global $wpdb,$woocommerce;
       $theorder = new WC_Order($order_id); 
       $this->orderObject = $theorder;
@@ -165,6 +264,7 @@ if($getPriority==''){
       //print_r($theorder);
       //exit;
     $trackingNumber = $theorder->order_custom_fields['_tracking_number'][0];
+    /*
     $getPriority =  lcfirst(get_option( 'shipping_provider_priority'));
     if($getPriority==''){   
         update_option( 'shipping_provider_priority', $income_data );
@@ -181,12 +281,12 @@ if($getPriority==''){
         }
         
         
-   // $trackingNum =  $this->delhiveryshipment();
-    $trackingNum =    $this->aramexShipments($theorder);
+    $trackingNum =  $this->delhiveryshipment();
+  //  $trackingNum =    $this->aramexShipments($theorder);
   //  $trackingNum =    $this->bluedartShipment($theorder);
  
       $_POST['tracking_number'] = $trackingNum;
-      $_POST['tracking_provider']='aramex';
+      $_POST['tracking_provider']='delhivery';
         
      //  update_post_meta(116, '_tracking_number',$trackingNum);
      //  update_post_meta(116,'_tracking_provider','delhivery');
@@ -199,48 +299,122 @@ if($getPriority==''){
     } else {
         // do nothing
     }
+     * 
+     */
   //  return true;
     //  exit;
+       
+        $getPriority =  lcfirst(get_option( 'shipping_provider_priority'));
+    if($getPriority==''){   
+        update_option( 'shipping_provider_priority', $income_data );
+      $income_data =  lcfirst('Delhivery-Aramex-Bluedart');
+      $explodePriority = explode('-',$income_data); 
+    } else {
+        $explodePriority = explode('-',$getPriority); 
+    }
+    if(empty($trackingNumber)){
+        $insertT = false;
+        foreach($explodePriority as $keye=>$vale){
+            echo $vale.''.$theorder->shipping_postcode;
+            if($this->checkAvailability(lcfirst($vale),$theorder->shipping_postcode)){
+                $provide = lcfirst($vale);
+                 $insertT = true;
+                break;
+            }
+         //   $this->$val.'bluedartShipment';
+        }
+         
         
+
+        if($insertT){
+            if($provide=='bluedart'){
+              $trackingNum =    $this->bluedartShipment($theorder);  
+      $_POST['tracking_number'] = $trackingNum;
+      $_POST['tracking_provider']='bluedart';
+                }
+                
+                        if($provide=='aramex'){
+              $trackingNum =    $this->aramexShipments($theorder);  
+      $_POST['tracking_number'] = $trackingNum;
+      $_POST['tracking_provider']='aramex';
+                } 
+                
+                                if($provide=='delhivery'){
+              $trackingNum =    $this->delhiveryshipment();  
+      $_POST['tracking_number'] = $trackingNum;
+      $_POST['tracking_provider']='delhivery';
+                }    
+            
+            
+        //    $trackingNum =  $this->delhiveryshipment();
+        } else {
+            
+            echo 'No tracking available';
+        }
+  //exit;
+  //  $trackingNum =    $this->aramexShipments($theorder);
+  //  $trackingNum =    $this->bluedartShipment($theorder);
+ 
+     // $_POST['tracking_number'] = $trackingNum;
+     // $_POST['tracking_provider']='delhivery';
+        
+     //  update_post_meta($vala, '_tracking_number',$trackingNum);
+      // update_post_meta($vala,'_tracking_provider','delhivery');
+     
+       // $this->assignTrackingAndProvider('delhivery',$trackingNum);
+     //  echo 'a';
+//exit;        
+
+      
+      
+    } else {
+        // do nothing
+    }
+    
+    
     }
     
     
     function checkAvailability($provider,$zipcode){
-        	$zipcode = $_POST['zipcode'];
+        global $wpdb;
+        	//echo $zipcode = $_POST['zipcode']; exit;
                 if($provider=='aramex'){
                    // $checkara =  stripslashes(get_option( 'woocommerce_cod_aramex_ena' ));
-                    if($checkara=='Yes'){
+
                     $aramex = $wpdb->get_var("SELECT count(*) as  aramexcount FROM ".$wpdb->prefix."cod_aramex WHERE pincode = ".$zipcode);
-                   // }
+
                     if($aramex < 1){
                         return false;
                     } else {
                         return true;
                     }
-                    
-                } else if($provider=='bluedart'){
+                } 
+                else if($provider=='bluedart'){
+              //      echo "SELECT count(*) as  bluedartcount FROM ".$wpdb->prefix."bluedart_codpins WHERE pincode = ".$zipcode; exit;
+                     $bluedart = $wpdb->get_var("SELECT count(*) as  bluedartcount FROM ".$wpdb->prefix."bluedart_codpins WHERE pincode = ".$zipcode);
+                   if($bluedart < 1){
+                        return false;
+                    } else {
+                        return true;
+                    }
+                     
+            
                     
                 }else if($provider=='delhivery'){
+                      $delhivery = $wpdb->get_var("SELECT count(*) as  delhiverycount FROM ".$wpdb->prefix."delhivery WHERE pin = ".$zipcode);
+                   if($delhivery < 1){
+                        return false;
+                    } else {
+                        return true;
+                    }
                     
                 }
                 
  
                 
 
-        $checkdtdc =  stripslashes(get_option( 'woocommerce_cod_dtdc_ena' ));
-         if($checkdtdc=='Yes'){
-        $dtdc = $wpdb->get_var("SELECT count(*) as dtdccount FROM ".$wpdb->prefix."cod_dtdc WHERE pincode = '".$zipcode."'");
-         }
-        $checkqua =  stripslashes(get_option( 'woocommerce_cod_quantium_ena' ));
-          if($checkqua=='Yes'){
-	$quantium = $wpdb->get_var("SELECT count(*) as quantiumcount FROM  ".$wpdb->prefix."cod_quantium WHERE pincode = ".$zipcode);
-          }
-        if($aramex < 1 && $dtdc < 1 && $quantium < 1){
-		echo 0;exit;
-	}else{
-		echo 1; exit;
-	}
-    }
+        
+   
     }
     
     
